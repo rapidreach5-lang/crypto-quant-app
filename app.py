@@ -54,15 +54,22 @@ if st.sidebar.button("Run Backtest 🚀"):
         trades_count = 0
         winning_trades = 0
         portfolio_values = []
-        trade_signals = []  # For plotting
+        benchmark_values = []
+
+        first_price = df.iloc[0]['close']
 
         for i in range(1, len(df)):
             prev = df.iloc[i - 1]
             curr = df.iloc[i]
             price = curr['close']
 
+            # Strategy Portfolio Value
             current_portfolio_val = cash + (crypto_held * price)
             portfolio_values.append(current_portfolio_val)
+
+            # Buy & Hold Benchmark Value
+            benchmark_val = initial_capital * (price / first_price)
+            benchmark_values.append(benchmark_val)
 
             if in_position:
                 stop_loss = entry_price * 0.99
@@ -86,7 +93,6 @@ if st.sidebar.button("Run Backtest 🚀"):
                     crypto_held = 0.0
                     in_position = False
                     trades_count += 1
-                    trade_signals.append((curr['timestamp'], exit_price, 'sell'))
 
             if not in_position:
                 if prev['fast_sma'] <= prev['slow_sma'] and curr['fast_sma'] > curr['slow_sma']:
@@ -96,12 +102,15 @@ if st.sidebar.button("Run Backtest 🚀"):
                         cash = 0.0
                         in_position = True
                         entry_price = price
-                        trade_signals.append((curr['timestamp'], price, 'buy'))
 
         final_val = cash + (crypto_held * df.iloc[-1]['close'])
         net_profit = final_val - initial_capital
         return_pct = (net_profit / initial_capital) * 100
         win_rate = (winning_trades / trades_count * 100) if trades_count > 0 else 0.0
+
+        # Benchmark Final Return
+        final_benchmark_val = benchmark_values[-1]
+        benchmark_return_pct = ((final_benchmark_val - initial_capital) / initial_capital) * 100
 
         # Quant Metrics
         p_series = pd.Series(portfolio_values)
@@ -113,23 +122,24 @@ if st.sidebar.button("Run Backtest 🚀"):
     # --- DISPLAY METRICS IN STREAMLIT ---
     st.success("Backtest Completed Successfully!")
 
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Final Portfolio", f"${final_val:,.2f}", f"{return_pct:+.2f}%")
-    col2.metric("Total Trades", f"{trades_count}")
-    col3.metric("Win Rate", f"{win_rate:.1f}%")
-    col4.metric("Sharpe Ratio", f"{sharpe:.2f}")
+    col1, col2, col3, col4, col5 = st.columns(5)
+    col1.metric("Strategy Final", f"${final_val:,.2f}", f"{return_pct:+.2f}%")
+    col2.metric("Buy & Hold Final", f"${final_benchmark_val:,.2f}", f"{benchmark_return_pct:+.2f}%")
+    col3.metric("Total Trades", f"{trades_count}")
+    col4.metric("Win Rate", f"{win_rate:.1f}%")
+    col5.metric("Sharpe Ratio", f"{sharpe:.2f}")
 
     st.markdown("---")
 
-    # --- PLOT CHART ---
+    # --- PLOT CHART (Strategy vs Benchmark) ---
     fig, ax = plt.subplots(figsize=(10, 5))
-    ax.plot(df['timestamp'], df['close'], label='Price', color='blue', alpha=0.6)
-    ax.plot(df['timestamp'], df['fast_sma'], label=f'Fast SMA ({fast_sma})', color='orange', alpha=0.8)
-    ax.plot(df['timestamp'], df['slow_sma'], label=f'Slow SMA ({slow_sma})', color='purple', alpha=0.8)
+    ax.plot(df['timestamp'][1:], portfolio_values, label='Strategy Portfolio ($)', color='green', linewidth=2)
+    ax.plot(df['timestamp'][1:], benchmark_values, label='Buy & Hold Benchmark ($)', color='gray', linestyle='--',
+            alpha=0.7)
 
-    ax.set_title(f"{symbol} Backtest Performance Chart")
+    ax.set_title(f"{symbol} Performance: Strategy vs. Buy & Hold")
     ax.set_xlabel("Date / Time")
-    ax.set_ylabel("Price (USDT)")
+    ax.set_ylabel("Portfolio Value ($)")
     ax.legend()
     ax.grid(True, alpha=0.3)
 
