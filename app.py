@@ -26,7 +26,11 @@ fee_rate = 0.001  # 0.1% exchange fee
 # --- RUN BACKTEST BUTTON ---
 if st.sidebar.button("Run Backtest 🚀"):
     with st.spinner(f"Fetching historical data for {symbol} from Binance..."):
+        # Change this line:
         exchange = ccxt.binance({'enableRateLimit': True})
+
+        # To Kraken (supports all your pairs and timeframes):
+        exchange = ccxt.kraken({'enableRateLimit': True})
         ohlcv = exchange.fetch_ohlcv(symbol, timeframe=timeframe, limit=1000)
 
         df = pd.DataFrame(ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
