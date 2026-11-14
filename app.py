@@ -13,7 +13,7 @@ st.markdown("Test Moving Average crossover strategies with RSI and volume filter
 # --- SIDEBAR CONTROLS ---
 st.sidebar.header("Strategy Parameters")
 
-symbol = st.sidebar.selectbox("Select Asset", ["BTC/USDT", "ETH/USDT", "SOL/USDT", "AVAX/USDT", "BNB/USDT"], index=0)
+symbol = st.sidebar.selectbox("Select Asset", ["BTC/USDT", "ETH/USDT", "SOL/USDT", "AVAX/USDT"], index=0)T", "BNB/USDT"], index=0)
 timeframe = st.sidebar.selectbox("Timeframe", ["15m", "1h", "4h", "1d"], index=0)
 
 fast_sma = st.sidebar.slider("Fast SMA Period", min_value=5, max_value=20, value=10)
@@ -26,8 +26,7 @@ fee_rate = 0.001  # 0.1% exchange fee
 # --- RUN BACKTEST BUTTON ---
 if st.sidebar.button("Run Backtest 🚀"):
     with st.spinner(f"Fetching historical data for {symbol} from Binance..."):
-        # Change this line:
-        exchange = ccxt.binance({'enableRateLimit': True})
+
 
         # To Kraken (supports all your pairs and timeframes):
         exchange = ccxt.kraken({'enableRateLimit': True})
